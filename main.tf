@@ -52,8 +52,8 @@ module "eks" {
 
   cluster_endpoint_public_access           = true
   enable_cluster_creator_admin_permissions = true
-  vpc_id     = module.vpc.vpc_id
-  subnet_ids = module.vpc.private_subnets
+  vpc_id                                   = module.vpc.vpc_id
+  subnet_ids                               = module.vpc.private_subnets
 
   cluster_addons = {
     aws-ebs-csi-driver = {
@@ -75,15 +75,15 @@ module "eks" {
       max_size     = 3
       desired_size = 2
     }
-#    two = {
-#      name = "node-group-2"
-#
-#      instance_types = ["t3.small"]
-#
-#      min_size     = 1
-#      max_size     = 2
-#      desired_size = 1
-#    }
+    #    two = {
+    #      name = "node-group-2"
+    #
+    #      instance_types = ["t3.small"]
+    #
+    #      min_size     = 1
+    #      max_size     = 2
+    #      desired_size = 1
+    #    }
   }
 }
 
