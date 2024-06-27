@@ -1,46 +1,25 @@
-# Copyright (c) HashiCorp, Inc.
-# SPDX-License-Identifier: MPL-2.0
-
 provider "aws" {
   region = var.region
 }
-
-# Filter out local zones, which are not currently supported 
-# with managed node groups
-data "aws_availability_zones" "available" {
-  filter {
-    name   = "opt-in-status"
-    values = ["opt-in-not-required"]
-  }
+# retrieve my existing existing VPC and subnets
+data "aws_vpc" "eks_vpc" {
+  id = "vpc-0cc3c139f96487cc0"
 }
 
-module "vpc" {
-  source  = "terraform-aws-modules/vpc/aws"
-  version = "5.8.1"
+data "aws_subnet" "private1" {
+  id = "subnet-00b7ff348bf4313f0"
+}
 
-  name = var.vpc_name
+data "aws_subnet" "private2" {
+  id = "subnet-04885171f6bb0c980"
+}
 
-  cidr = "10.0.0.0/16"
-  azs  = slice(data.aws_availability_zones.available.names, 0, 3)
+data "aws_subnet" "public1" {
+  id = "subnet-02bcd6c250d6e284f"
+}
 
-  private_subnets = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
-  public_subnets  = ["10.0.4.0/24", "10.0.5.0/24", "10.0.6.0/24"]
-
-  enable_nat_gateway   = true
-  single_nat_gateway   = true
-  enable_dns_hostnames = true
-
-  public_subnet_tags = {
-    "kubernetes.io/role/elb" = 1
-  }
-
-  private_subnet_tags = {
-    "kubernetes.io/role/internal-elb" = 1
-  }
-
-  tags = {
-    "Name" = var.vpc_name
-  }
+data "aws_subnet" "public2" {
+  id = "subnet-00b4aace2090ba378"
 }
 
 module "eks" {
@@ -52,8 +31,11 @@ module "eks" {
 
   cluster_endpoint_public_access           = true
   enable_cluster_creator_admin_permissions = true
-  vpc_id                                   = module.vpc.vpc_id
-  subnet_ids                               = module.vpc.private_subnets
+  vpc_id                                   = data.aws_vpc.eks_vpc.id
+  subnet_ids = [
+    data.aws_subnet.private1.id,
+    data.aws_subnet.private2.id
+  ]
 
   cluster_addons = {
     aws-ebs-csi-driver = {
@@ -73,7 +55,7 @@ module "eks" {
 
       min_size     = 1
       max_size     = 3
-      desired_size = 2
+      desired_size = 3
     }
     #    two = {
     #      name = "node-group-2"
