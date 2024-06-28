@@ -20,3 +20,23 @@ output "cluster_name" {
   description = "Kubernetes Cluster Name"
   value       = module.eks.cluster_name
 }
+
+output "postgres_server_details" {
+  description = "Postgres server details"
+  value = {
+    hostname      = aws_db_instance.postgres.address
+    port          = aws_db_instance.postgres.port
+    username      = aws_db_instance.postgres.username
+    password      = aws_db_instance.postgres.password
+    database_name = aws_db_instance.postgres.db_name
+  }
+  sensitive = true
+}
+
+output "redis_cache_details" {
+  description = "Redis cache details"
+  value = {
+    hostname = aws_elasticache_cluster.redis.cache_nodes[0].address
+    port     = aws_elasticache_cluster.redis.cache_nodes[0].port
+  }
+}

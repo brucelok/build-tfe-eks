@@ -1,25 +1,46 @@
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 provider "aws" {
   region = var.region
 }
-# retrieve my existing existing VPC and subnets
-data "aws_vpc" "eks_vpc" {
-  id = "vpc-0cc3c139f96487cc0"
+
+# Filter out local zones, which are not currently supported 
+# with managed node groups
+data "aws_availability_zones" "available" {
+  filter {
+    name   = "opt-in-status"
+    values = ["opt-in-not-required"]
+  }
 }
 
-data "aws_subnet" "private1" {
-  id = "subnet-00b7ff348bf4313f0"
-}
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "5.8.1"
 
-data "aws_subnet" "private2" {
-  id = "subnet-04885171f6bb0c980"
-}
+  name = var.vpc_name
 
-data "aws_subnet" "public1" {
-  id = "subnet-02bcd6c250d6e284f"
-}
+  cidr = "10.0.0.0/16"
+  azs  = slice(data.aws_availability_zones.available.names, 0, 3)
 
-data "aws_subnet" "public2" {
-  id = "subnet-00b4aace2090ba378"
+  private_subnets = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
+  public_subnets  = ["10.0.4.0/24", "10.0.5.0/24", "10.0.6.0/24"]
+
+  enable_nat_gateway   = true
+  single_nat_gateway   = true
+  enable_dns_hostnames = true
+
+  public_subnet_tags = {
+    "kubernetes.io/role/elb" = 1
+  }
+
+  private_subnet_tags = {
+    "kubernetes.io/role/internal-elb" = 1
+  }
+
+  tags = {
+    "Name" = var.vpc_name
+  }
 }
 
 module "eks" {
@@ -52,17 +73,17 @@ module "eks" {
 
       min_size     = 1
       max_size     = 3
-      desired_size = 3
+      desired_size = 2
     }
-#    two = {
-#      name = "node-group-2"
-#
-#      instance_types = ["t3.small"]
-#
-#      min_size     = 1
-#      max_size     = 2
-#      desired_size = 1
-#    }
+    #    two = {
+    #      name = "node-group-2"
+    #
+    #      instance_types = ["t3.small"]
+    #
+    #      min_size     = 1
+    #      max_size     = 2
+    #      desired_size = 1
+    #    }
   }
 }
 
@@ -80,4 +101,84 @@ module "irsa-ebs-csi" {
   provider_url                  = module.eks.oidc_provider
   role_policy_arns              = [data.aws_iam_policy.ebs_csi_policy.arn]
   oidc_fully_qualified_subjects = ["system:serviceaccount:kube-system:ebs-csi-controller-sa"]
+}
+
+resource "aws_db_subnet_group" "postgres_subnet_group" {
+  name       = "tfedb-subnet-group"
+  subnet_ids = module.vpc.private_subnets
+}
+
+# PostgreSQL
+resource "aws_db_instance" "postgres" {
+  identifier        = "tfedb-instance"
+  engine            = "postgres"
+  instance_class    = "db.t3.micro"
+  allocated_storage = 20
+  username = "postgres"
+  password = "6ya0Jv6RASGVLYUrP4qb"
+  db_name  = "tfedb"
+  db_subnet_group_name   = aws_db_subnet_group.postgres_subnet_group.name
+  vpc_security_group_ids = [aws_security_group.db_sg.id]
+  publicly_accessible = false
+  skip_final_snapshot = true
+}
+
+# Security Group for PostgreSQL
+resource "aws_security_group" "db_sg" {
+  name        = "tfedb-sg"
+  description = "Allow internal VPC access to PostgreSQL"
+  vpc_id      = module.vpc.vpc_id
+
+  ingress {
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = [module.vpc.vpc_cidr_block]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+# Redis
+resource "aws_elasticache_cluster" "redis" {
+  cluster_id           = "tfecache-instance"
+  engine               = "redis"
+  engine_version       = "6.x"
+  node_type            = "cache.t3.micro" # Lower cost node type for development
+  num_cache_nodes      = 1
+  parameter_group_name = "default.redis6.x"
+  subnet_group_name    = aws_elasticache_subnet_group.redis_subnet_group.name
+  security_group_ids   = [aws_security_group.redis_sg.id]
+}
+
+# Subnet Group for Redis
+resource "aws_elasticache_subnet_group" "redis_subnet_group" {
+  name       = "tfecache-subnet-group"
+  subnet_ids = module.vpc.private_subnets
+}
+
+# Security Group for Redis 
+resource "aws_security_group" "redis_sg" {
+  name        = "tfecache-sg"
+  description = "Allow internal VPC access to Redis"
+  vpc_id      = module.vpc.vpc_id
+
+  ingress {
+    from_port   = 6379
+    to_port     = 6379
+    protocol    = "tcp"
+    cidr_blocks = [module.vpc.vpc_cidr_block]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }
