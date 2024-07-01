@@ -26,11 +26,9 @@ output "postgres_server_details" {
   value = {
     hostname      = aws_db_instance.postgres.address
     port          = aws_db_instance.postgres.port
-    username      = aws_db_instance.postgres.username
-    password      = aws_db_instance.postgres.password
     database_name = aws_db_instance.postgres.db_name
   }
-  sensitive = true
+  #  sensitive = true
 }
 
 output "redis_cache_details" {

@@ -22,8 +22,19 @@ variable "region" {
   default     = "ap-southeast-2"
 }
 
-#variable "ssh_public_key" {
-#  description = "Your SSH public key"
-#  type        = string
-#  default     = ""
-#}
+variable "rds_username" {
+  description = "RDS username"
+  type        = string
+  default     = "postgres"
+}
+
+variable "rds_db_name" {
+  description = "RDS database name"
+  type        = string
+  default     = "tfedb"
+}
+
+variable "rds_password" {
+  description = "RDS password"
+  type        = string
+}

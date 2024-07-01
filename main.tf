@@ -110,17 +110,17 @@ resource "aws_db_subnet_group" "postgres_subnet_group" {
 
 # PostgreSQL
 resource "aws_db_instance" "postgres" {
-  identifier        = "tfedb-instance"
-  engine            = "postgres"
-  instance_class    = "db.t3.micro"
-  allocated_storage = 20
-  username = "postgres"
-  password = "6ya0Jv6RASGVLYUrP4qb"
-  db_name  = "tfedb"
+  identifier             = "tfedb-instance"
+  engine                 = "postgres"
+  instance_class         = "db.t3.micro"
+  allocated_storage      = 20
+  username               = var.rds_username
+  password               = var.rds_password
+  db_name                = var.rds_db_name
   db_subnet_group_name   = aws_db_subnet_group.postgres_subnet_group.name
   vpc_security_group_ids = [aws_security_group.db_sg.id]
-  publicly_accessible = false
-  skip_final_snapshot = true
+  publicly_accessible    = false
+  skip_final_snapshot    = true
 }
 
 # Security Group for PostgreSQL
