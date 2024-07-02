@@ -149,7 +149,7 @@ resource "aws_elasticache_cluster" "redis" {
   cluster_id           = "tfecache-instance"
   engine               = "redis"
   engine_version       = "6.x"
-  node_type            = "cache.t3.micro" # Lower cost node type for development
+  node_type            = "cache.t3.micro"
   num_cache_nodes      = 1
   parameter_group_name = "default.redis6.x"
   subnet_group_name    = aws_elasticache_subnet_group.redis_subnet_group.name

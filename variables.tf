@@ -37,4 +37,5 @@ variable "rds_db_name" {
 variable "rds_password" {
   description = "RDS password"
   type        = string
+  sensitive   = true
 }
