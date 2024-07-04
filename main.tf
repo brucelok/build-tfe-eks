@@ -87,6 +87,16 @@ module "eks" {
   }
 }
 
+# retrieve the IAM role name of the EKS cluster
+data "aws_iam_role" "eks_cluster_role" {
+  name = module.eks.cluster_iam_role_name
+}
+# attach the AmazonS3FullAccess policy to the EKS cluster role
+resource "aws_iam_role_policy_attachment" "eks_s3_full_access" {
+  role       = data.aws_iam_role.eks_cluster_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+}
+
 # https://aws.amazon.com/blogs/containers/amazon-ebs-csi-driver-is-now-generally-available-in-amazon-eks-add-ons/ 
 data "aws_iam_policy" "ebs_csi_policy" {
   arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
