@@ -122,6 +122,7 @@ resource "aws_db_subnet_group" "postgres_subnet_group" {
 resource "aws_db_instance" "postgres" {
   identifier             = "tfedb-instance"
   engine                 = "postgres"
+  engine_version         = "15.7"
   instance_class         = "db.t3.micro"
   allocated_storage      = 20
   username               = var.rds_username
@@ -158,10 +159,10 @@ resource "aws_security_group" "db_sg" {
 resource "aws_elasticache_cluster" "redis" {
   cluster_id           = "tfecache-instance"
   engine               = "redis"
-  engine_version       = "6.x"
+  engine_version       = "7.1"
   node_type            = "cache.t3.micro"
   num_cache_nodes      = 1
-  parameter_group_name = "default.redis6.x"
+  parameter_group_name = "default.redis7"
   subnet_group_name    = aws_elasticache_subnet_group.redis_subnet_group.name
   security_group_ids   = [aws_security_group.redis_sg.id]
 }
