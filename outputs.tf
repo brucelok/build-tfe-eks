@@ -38,7 +38,3 @@ output "redis_cache_details" {
     port     = aws_elasticache_cluster.redis.cache_nodes[0].port
   }
 }
-# out IAM role name for debugging
-output "cluster_iam_role_name" {
-  value = module.eks.cluster_iam_role_name
-}
