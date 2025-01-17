@@ -27,8 +27,15 @@ env:
     TFE_LICENSE: "LICENSE..."
     TFE_ENCRYPTION_PASSWORD: "PASSWORD"
 
+resources:
+  requests:
+    memory: "1536Mi"
+    cpu: "750m"
+  limits:
+    memory: "2Gi"
+    cpu: "1000m"
+
 service:
   annotations: {}
-    service.beta.kubernetes.io/aws-load-balancer-type: "nlb-ip"
   type: LoadBalancer
   port: 443
