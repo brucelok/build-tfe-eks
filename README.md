@@ -10,14 +10,18 @@ After you successfully provision the EKS, RDS and Redis on AWS, follow the steps
 ## Deploy Terraform Enterprise
 The example Helm [value.yaml](https://github.com/brucelok/build-tfe-eks/blob/main/value.yaml) file contains the minimal setting required to deploy the Terraform Enterprise instance on EKS.
 
-** Attention Required for the Following Data:**
-* `certData` ,`keyData` and `caCertData`: These are base64 encoded outputs from the certificate and private key PEM files. eg: `cat privkey.pem | base64`
+**Attention Required for the Following Data:**
+* `certData` ,`keyData` and `caCertData`: These must be a base64 encoded outputs from the certificate and private key PEM files. eg: `base64 -w 0 cert.pem`
 * In AWS RDS, the default parameter group of postgres15 and 16 are `rds.force_ssl` set to `1`. That means the `TFE_DATABASE_PARAMETERS` must set to `sslmode=require` in Helm value.yaml file
 * Ensure your S3 Bucket can be accessed from the pod level
 * Remember to pass the RDS password in the seperate variable file`.tfvars` file OR command line option `-var`.
+* Redis user must be a default user
 
 Finally you can install Terraform Enterprise with Helm.
 For example:
 ```
 helm install terraform-enterprise hashicorp/terraform-enterprise -f value.yaml -n tfe --version "1.2.0" --wait --debug
 ```
+
+## Post-installation
+Once helm install is completed, you need to **[provision your first administrative user](https://developer.hashicorp.com/terraform/enterprise/deploy/initial-admin-user)** before start using Terraform Enterprise.
