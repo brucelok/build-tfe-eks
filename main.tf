@@ -59,6 +59,9 @@ module "eks" {
     aws-ebs-csi-driver = {
       service_account_role_arn = module.irsa-ebs-csi.iam_role_arn
     }
+    metrics-server = {
+      most_recent = true
+    }
   }
 
   eks_managed_node_group_defaults = {
@@ -67,23 +70,12 @@ module "eks" {
 
   eks_managed_node_groups = {
     one = {
-      name = "node-group-1"
-
-      instance_types = ["t3.medium"]
-
-      min_size     = 1
-      max_size     = 3
-      desired_size = 2
+      name           = "node-group-1"
+      instance_types = ["t3a.large"]
+      min_size       = 1
+      max_size       = 3
+      desired_size   = 1
     }
-    #    two = {
-    #      name = "node-group-2"
-    #
-    #      instance_types = ["t3.small"]
-    #
-    #      min_size     = 1
-    #      max_size     = 2
-    #      desired_size = 1
-    #    }
   }
 }
 
