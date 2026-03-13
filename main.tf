@@ -16,7 +16,7 @@ data "aws_availability_zones" "available" {
 
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = "5.8.1"
+  version = "6.6.0"
 
   name = var.vpc_name
 
@@ -45,17 +45,17 @@ module "vpc" {
 
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "20.14.0"
+  version = "21.15.1"
 
-  cluster_name    = var.cluster_name
-  cluster_version = var.cluster_version
+  name               = var.cluster_name
+  kubernetes_version = var.cluster_version
 
-  cluster_endpoint_public_access           = true
+  endpoint_public_access                   = true
   enable_cluster_creator_admin_permissions = true
   vpc_id                                   = module.vpc.vpc_id
   subnet_ids                               = module.vpc.private_subnets
 
-  cluster_addons = {
+  addons = {
     aws-ebs-csi-driver = {
       service_account_role_arn = module.irsa-ebs-csi.iam_role_arn
     }
@@ -69,12 +69,17 @@ module "eks" {
   }
 
   eks_managed_node_groups = {
-    one = {
-      name           = "node-group-1"
-      instance_types = ["t3a.large"]
-      min_size       = 1
-      max_size       = 3
-      desired_size   = 1
+    tfe-nodegroup = {
+      name                       = "node-group-1"
+      instance_types             = ["t3.xlarge"]
+      min_size                   = 1
+      max_size                   = 3
+      desired_size               = 1
+      disk_size                  = 20
+      iam_role_attach_cni_policy = true
+      iam_role_additional_policies = {
+        AmazonEKS_CNI_Policy = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+      }
     }
   }
 }
