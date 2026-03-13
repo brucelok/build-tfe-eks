@@ -64,18 +64,16 @@ module "eks" {
     }
   }
 
-  eks_managed_node_group_defaults = {
-    ami_type = "AL2_x86_64"
-  }
-
   eks_managed_node_groups = {
     tfe-nodegroup = {
       name                       = "node-group-1"
+      #ami_type                   = "AL2_x86_64"
       instance_types             = ["t3.xlarge"]
       min_size                   = 1
       max_size                   = 3
       desired_size               = 1
       disk_size                  = 20
+      
       iam_role_attach_cni_policy = true
       iam_role_additional_policies = {
         AmazonEKS_CNI_Policy = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
